@@ -45,10 +45,11 @@ def get_system_info():
     return info
 
 
-def print_system_info(info):
-    print(json.dumps(info, indent=4))
+def write_system_info_to_file(info, filename):
+    with open(filename, "w") as file:
+        file.write(json.dumps(info, indent=4))
 
 
 if __name__ == "__main__":
     system_info = get_system_info()
-    print_system_info(system_info)
+    write_system_info_to_file(system_info, "output.txt")
