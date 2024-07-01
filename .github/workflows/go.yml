@@ -1,0 +1,42 @@
+name: Build Go
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.22.4  # Replace with the Go version you are using
+
+    - name: Install dependencies
+      run: go mod tidy
+
+    - name: Build
+      run: |
+        GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o sysutil-${{ matrix.goos }}-${{ matrix.goarch }}
+
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: sysutil-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: sysutil-${{ matrix.goos }}-${{ matrix.goarch }}
+
