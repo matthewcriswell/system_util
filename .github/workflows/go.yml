@@ -2,11 +2,11 @@ name: Build Go
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    tags:
+      - '*'
+  release:
+    types:
+      - created
 
 jobs:
   build:
@@ -55,6 +55,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        ref: ${{ github.ref }}
 
     - name: Download artifacts
       uses: actions/download-artifact@v3
