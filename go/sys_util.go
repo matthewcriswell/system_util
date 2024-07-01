@@ -3,28 +3,29 @@ package main
 import (
     "encoding/json"
     "fmt"
-    "github.com/shirou/gopsutil/v3/cpu"
-    "github.com/shirou/gopsutil/v3/disk"
-    "github.com/shirou/gopsutil/v3/mem"
-    "github.com/shirou/gopsutil/v3/net"
-    "github.com/shirou/gopsutil/v3/host"
+    "github.com/shirou/gopsutil/v4/cpu"
+    "github.com/shirou/gopsutil/v4/disk"
+    "github.com/shirou/gopsutil/v4/host"
+    "github.com/shirou/gopsutil/v4/mem"
+    "github.com/shirou/gopsutil/v4/net"
     "os"
     "time"
+    stdnet "net"
 )
 
 type SystemInfo struct {
-    CPUCount        int                      `json:"cpu_count"`
-    CPUCountLogical int                      `json:"cpu_count_logical"`
-    CPUPercent      float64                  `json:"cpu_percent"`
-    CPUTimes        []cpu.TimesStat          `json:"cpu_times"`
-    Memory          *mem.VirtualMemoryStat   `json:"memory"`
-    Swap            *mem.SwapMemoryStat      `json:"swap"`
-    DiskPartitions  []disk.PartitionStat     `json:"disk_partitions"`
+    CPUCount        int                       `json:"cpu_count"`
+    CPUCountLogical int                       `json:"cpu_count_logical"`
+    CPUPercent      float64                   `json:"cpu_percent"`
+    CPUTimes        []cpu.TimesStat           `json:"cpu_times"`
+    Memory          *mem.VirtualMemoryStat    `json:"memory"`
+    Swap            *mem.SwapMemoryStat       `json:"swap"`
+    DiskPartitions  []disk.PartitionStat      `json:"disk_partitions"`
     DiskUsage       map[string]*disk.UsageStat `json:"disk_usage"`
-    NetIOCounters   []net.IOCountersStat     `json:"net_io_counters"`
-    NetIfAddrs      map[string][]net.InterfaceAddr `json:"net_if_addrs"`
-    NetIfStats      []net.InterfaceStat      `json:"net_if_stats"`
-    HostInfo        *host.InfoStat           `json:"host_info"`
+    NetIOCounters   []net.IOCountersStat      `json:"net_io_counters"`
+    NetIfAddrs      map[string][]string       `json:"net_if_addrs"`
+    NetIfStats      []net.InterfaceStat       `json:"net_if_stats"`
+    HostInfo        *host.InfoStat            `json:"host_info"`
 }
 
 func getSystemInfo() (*SystemInfo, error) {
@@ -93,17 +94,21 @@ func getSystemInfo() (*SystemInfo, error) {
     }
     info.NetIOCounters = netIOCounters
 
-    netIfAddrs, err := net.Interfaces()
+    interfaces, err := stdnet.Interfaces()
     if err != nil {
         return nil, err
     }
-    netIfAddrsMap := make(map[string][]net.InterfaceAddr)
-    for _, iface := range netIfAddrs {
+    netIfAddrsMap := make(map[string][]string)
+    for _, iface := range interfaces {
         addrs, err := iface.Addrs()
         if err != nil {
             return nil, err
         }
-        netIfAddrsMap[iface.Name] = addrs
+        var addrStrs []string
+        for _, addr := range addrs {
+            addrStrs = append(addrStrs, addr.String())
+        }
+        netIfAddrsMap[iface.Name] = addrStrs
     }
     info.NetIfAddrs = netIfAddrsMap
 
@@ -151,4 +156,3 @@ func main() {
 
     fmt.Println("System information written to output.txt")
 }
-
